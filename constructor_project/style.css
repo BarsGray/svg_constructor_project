@@ -1,0 +1,14 @@
+body {
+  background-color: gray;
+}
+.container {
+  margin: 100px auto 0;
+  max-width: 1200px;
+}
+.my_svg_box {
+  background-color: #fff;
+  min-height: 500px;
+}
+path {
+  transition: all .5s ease-in-out;
+}
