@@ -1,4 +1,4 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -10,14 +10,26 @@
   <div class="container">
     <div class="my_svg_box">
       <!-- <svg viewBox="0 0 200 200" width="1000" height="500"> -->
-      <!-- <svg viewBox="0 0 500 500">
+      <svg viewBox="0 0 500 500">
         <path d="m 20,20 l 40,40 l 40,0" stroke="black" stroke-width="2" fill="none"/>
       </svg>
     </div>
   </div>
   <script src="main.js"></script>
 </body>
-</html> --> 
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -384,6 +396,2960 @@ angleInput.addEventListener(
 
 
 // Первоначальная отрисовка
+
+renderDrill();
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конструктор сверла</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    input {
+      width: 100px;
+      padding: 6px;
+    }
+    /* Контейнер SVG */
+    .svg-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 400px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+    /* SVG занимает весь контейнер */
+    #drill {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Центральная ось */
+    .axis {
+      stroke: #999;
+      stroke-width: 0.3;
+      stroke-dasharray: 2 2;
+    }
+    /* Сверло */
+    .drill {
+      stroke: black;
+      stroke-width: 0.5;
+      fill: none;
+    }
+    /* Размерная линия */
+    .dimension {
+      stroke: #555;
+      stroke-width: 0.25;
+    }
+    /* Текст */
+    text {
+      font-size: 3px;
+      fill: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>Конструктор сверла</h2>
+  <div class="controls">
+    <label>Диаметр, мм<input id="diameter" type="number" value="10" min="1" step="0.1"></label>
+
+    <label>Длина рабочей части, мм<input id="workingLength" type="number" value="100" min="1" step="1"></label>
+
+    <label>Длина хвостовика, мм<input id="shankLength" type="number" value="50" min="1" step="1"></label>
+
+    <label>Угол заточки, °<input id="angle" type="number" value="118" min="1" max="179" step="1"></label>
+  </div>
+
+  <div class="svg-container">
+    <svg id="drill" preserveAspectRatio="xMidYMid meet">
+      <!-- Центральная ось -->
+      <line id="axis" class="axis" />
+      <!-- Верхняя режущая кромка -->
+      <line id="edgeTop" class="drill" />
+      <!-- Нижняя режущая кромка -->
+      <line id="edgeBottom" class="drill" />
+      <!-- Верхняя сторона рабочей части -->
+      <line id="bodyTop" class="drill" />
+      <!-- Нижняя сторона рабочей части -->
+      <line id="bodyBottom" class="drill" />
+      <!-- Верх хвостовика -->
+      <line id="shankTop" class="drill" />
+      <!-- Низ хвостовика -->
+      <line id="shankBottom" class="drill" />
+      <!-- Размер диаметра -->
+      <line id="diameterLine" class="dimension" />
+      <text id="diameterText"></text>
+    </svg>
+  </div>
+  <script>
+    // ============================================================
+    // Элементы управления
+    // ============================================================
+    const diameterInput = document.querySelector('#diameter');
+    const workingLengthInput = document.querySelector('#workingLength');
+    const shankLengthInput = document.querySelector('#shankLength');
+    const angleInput = document.querySelector('#angle');
+
+    // ============================================================
+    // SVG
+    // ============================================================
+    const svg = document.querySelector('#drill');
+
+    // ============================================================
+    // Линии
+    // ============================================================
+    const axis = document.querySelector('#axis');
+    const edgeTop = document.querySelector('#edgeTop');
+    const edgeBottom = document.querySelector('#edgeBottom');
+    const bodyTop = document.querySelector('#bodyTop');
+    const bodyBottom = document.querySelector('#bodyBottom');
+    const shankTop = document.querySelector('#shankTop');
+    const shankBottom = document.querySelector('#shankBottom');
+    const diameterLine = document.querySelector('#diameterLine');
+    const diameterText = document.querySelector('#diameterText');
+
+
+    // ============================================================
+    // Отрисовка
+    // ============================================================
+    function renderDrill() {
+
+      // ========================================================
+      // Получаем значения
+      // ========================================================
+      const diameter = Number(diameterInput.value);
+      const workingLength = Number(workingLengthInput.value);
+      const shankLength = Number(shankLengthInput.value);
+      const angle = Number(angleInput.value);
+
+      // ========================================================
+      // Радиус
+      // ========================================================
+      const radius = diameter / 2;
+
+      // ========================================================
+      // Переводим угол в радианы
+      // ========================================================
+      const angleRad = angle * Math.PI / 180;
+
+      // ========================================================
+      // Половина угла вершины
+      // ========================================================
+      const halfAngle = angleRad / 2;
+
+      // ========================================================
+      // Длина конуса вершины
+      //
+      // R / tan(угол / 2)
+      // ========================================================
+      const pointLength = radius / Math.tan(halfAngle);
+
+      // ========================================================
+      // Координаты
+      // ========================================================
+      const tipX = 0;
+      const centerY = 0;
+      const shoulderX = pointLength;
+      const workingEndX = shoulderX + workingLength;
+      const shankEndX = workingEndX + shankLength;
+
+      // ========================================================
+      // Размерная линия
+      // ========================================================
+      const dimensionX = shankEndX + Math.max(5, diameter);
+
+      // ========================================================
+      // Общая ширина
+      //
+      // Добавляем отступ слева и справа
+      // ========================================================
+      const paddingX = Math.max(10, shankEndX * 0.05);
+      const minX = -paddingX;
+      const maxX = dimensionX + paddingX;
+      const viewWidth = maxX - minX;
+
+      // ========================================================
+      // Высота
+      //
+      // Диаметр + место для размерной линии
+      // ========================================================
+      const paddingY = Math.max(10, diameter);
+      const minY = -radius - paddingY;
+      const maxY = radius + paddingY;
+      const viewHeight = maxY - minY;
+
+      // ========================================================
+      // Устанавливаем viewBox
+      // ========================================================
+
+      svg.setAttribute( 'viewBox', `${minX} ${minY} ${viewWidth} ${viewHeight}` );
+
+      // ========================================================
+      // Центральная ось
+      // ========================================================
+      axis.setAttribute('x1', minX);
+      axis.setAttribute('y1', centerY);
+      axis.setAttribute('x2', maxX);
+      axis.setAttribute('y2', centerY);
+
+      // ========================================================
+      // Верхняя режущая кромка
+      // ========================================================
+      edgeTop.setAttribute( 'x1', tipX );
+      edgeTop.setAttribute( 'y1', centerY );
+      edgeTop.setAttribute( 'x2', shoulderX );
+      edgeTop.setAttribute( 'y2', -radius );
+
+      // ========================================================
+      // Нижняя режущая кромка
+      // ========================================================
+      edgeBottom.setAttribute( 'x1', tipX );
+      edgeBottom.setAttribute( 'y1', centerY );
+      edgeBottom.setAttribute( 'x2', shoulderX );
+      edgeBottom.setAttribute( 'y2', radius );
+
+      // ========================================================
+      // Верх рабочей части
+      // ========================================================
+      bodyTop.setAttribute( 'x1', shoulderX );
+      bodyTop.setAttribute( 'y1', -radius );
+      bodyTop.setAttribute( 'x2', workingEndX );
+      bodyTop.setAttribute( 'y2', -radius );
+
+      // ========================================================
+      // Низ рабочей части
+      // ========================================================
+      bodyBottom.setAttribute( 'x1', shoulderX );
+      bodyBottom.setAttribute( 'y1', radius );
+      bodyBottom.setAttribute( 'x2', workingEndX );
+      bodyBottom.setAttribute( 'y2', radius );
+
+      // ========================================================
+      // Верх хвостовика
+      // ========================================================
+      shankTop.setAttribute( 'x1', workingEndX );
+      shankTop.setAttribute( 'y1', -radius );
+      shankTop.setAttribute( 'x2', shankEndX );
+      shankTop.setAttribute( 'y2', -radius );
+
+      // ========================================================
+      // Низ хвостовика
+      // ========================================================
+      shankBottom.setAttribute( 'x1', workingEndX );
+      shankBottom.setAttribute( 'y1', radius );
+      shankBottom.setAttribute( 'x2', shankEndX );
+      shankBottom.setAttribute( 'y2', radius );
+
+      // ========================================================
+      // Размерная линия диаметра
+      // ========================================================
+      diameterLine.setAttribute( 'x1', dimensionX );
+      diameterLine.setAttribute( 'y1', -radius );
+      diameterLine.setAttribute( 'x2', dimensionX );
+      diameterLine.setAttribute( 'y2', radius );
+
+      // ========================================================
+      // Текст диаметра
+      // ========================================================
+      diameterText.setAttribute( 'x', dimensionX + 2 );
+      diameterText.setAttribute( 'y', 1 );
+      diameterText.textContent = `Ø ${diameter} мм`;
+    }
+
+    // ============================================================
+    // События
+    // ============================================================
+    diameterInput.addEventListener('input',renderDrill);
+    workingLengthInput.addEventListener('input',renderDrill);
+    shankLengthInput.addEventListener('input',renderDrill);
+    angleInput.addEventListener('input',renderDrill);
+
+    // ============================================================
+    // Первый запуск
+    // ============================================================
+    renderDrill()
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Конструктор сверла</title>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input {
+      width: 100px;
+      padding: 6px;
+    }
+
+    /* Контейнер SVG */
+
+    .svg-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 400px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+
+    /* SVG */
+
+    #drill {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Сетка */
+
+    .grid-line {
+      stroke: #ddd;
+      stroke-width: 0.2;
+    }
+
+    /* Сверло */
+
+    .drill {
+      stroke: black;
+      stroke-width: 0.5;
+      fill: none;
+    }
+
+    /* Размерная линия */
+
+    .dimension {
+      stroke: #555;
+      stroke-width: 0.25;
+    }
+
+    /* Текст */
+
+    text {
+      font-size: 3px;
+      fill: #333;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+<h2>Конструктор сверла</h2>
+
+
+<div class="controls">
+
+  <label>
+    Диаметр, мм
+    <input
+      id="diameter"
+      type="number"
+      value="10"
+      min="1"
+      step="0.1"
+    >
+  </label>
+
+
+  <label>
+    Длина рабочей части, мм
+    <input
+      id="workingLength"
+      type="number"
+      value="100"
+      min="1"
+      step="1"
+    >
+  </label>
+
+
+  <label>
+    Длина хвостовика, мм
+    <input
+      id="shankLength"
+      type="number"
+      value="50"
+      min="1"
+      step="1"
+    >
+  </label>
+
+
+  <label>
+    Угол заточки, °
+    <input
+      id="angle"
+      type="number"
+      value="118"
+      min="1"
+      max="179"
+      step="1"
+    >
+  </label>
+
+</div>
+
+
+<div class="svg-container">
+
+  <svg
+    id="drill"
+    preserveAspectRatio="xMidYMid meet"
+  >
+
+    <!-- ========================================= -->
+    <!-- Сетка 5 × 5 мм -->
+    <!-- ========================================= -->
+
+    <defs>
+
+      <pattern
+        id="grid"
+        width="5"
+        height="5"
+        patternUnits="userSpaceOnUse"
+      >
+
+        <path
+          d="M 5 0 L 0 0 L 0 5"
+          fill="none"
+          class="grid-line"
+        />
+
+      </pattern>
+
+    </defs>
+
+
+    <!-- Фон с сеткой -->
+
+    <rect
+      id="gridBackground"
+      fill="url(#grid)"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Верхняя режущая кромка -->
+    <!-- ========================================= -->
+
+    <line
+      id="edgeTop"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Нижняя режущая кромка -->
+    <!-- ========================================= -->
+
+    <line
+      id="edgeBottom"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Верхняя сторона рабочей части -->
+    <!-- ========================================= -->
+
+    <line
+      id="bodyTop"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Нижняя сторона рабочей части -->
+    <!-- ========================================= -->
+
+    <line
+      id="bodyBottom"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Верх хвостовика -->
+    <!-- ========================================= -->
+
+    <line
+      id="shankTop"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Низ хвостовика -->
+    <!-- ========================================= -->
+
+    <line
+      id="shankBottom"
+      class="drill"
+    />
+
+
+    <!-- ========================================= -->
+    <!-- Размер диаметра -->
+    <!-- ========================================= -->
+
+    <line
+      id="diameterLine"
+      class="dimension"
+    />
+
+    <text
+      id="diameterText"
+    ></text>
+
+  </svg>
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// Элементы управления
+// ============================================================
+
+const diameterInput =
+  document.querySelector('#diameter');
+
+const workingLengthInput =
+  document.querySelector('#workingLength');
+
+const shankLengthInput =
+  document.querySelector('#shankLength');
+
+const angleInput =
+  document.querySelector('#angle');
+
+
+// ============================================================
+// SVG
+// ============================================================
+
+const svg =
+  document.querySelector('#drill');
+
+
+// ============================================================
+// Сетка
+// ============================================================
+
+const gridBackground =
+  document.querySelector('#gridBackground');
+
+
+// ============================================================
+// Линии сверла
+// ============================================================
+
+const edgeTop =
+  document.querySelector('#edgeTop');
+
+const edgeBottom =
+  document.querySelector('#edgeBottom');
+
+const bodyTop =
+  document.querySelector('#bodyTop');
+
+const bodyBottom =
+  document.querySelector('#bodyBottom');
+
+const shankTop =
+  document.querySelector('#shankTop');
+
+const shankBottom =
+  document.querySelector('#shankBottom');
+
+
+// ============================================================
+// Размер диаметра
+// ============================================================
+
+const diameterLine =
+  document.querySelector('#diameterLine');
+
+const diameterText =
+  document.querySelector('#diameterText');
+
+
+// ============================================================
+// Отрисовка
+// ============================================================
+
+function renderDrill() {
+
+
+  // ==========================================================
+  // Получаем параметры
+  // ==========================================================
+
+  const diameter =
+    Number(diameterInput.value);
+
+  const workingLength =
+    Number(workingLengthInput.value);
+
+  const shankLength =
+    Number(shankLengthInput.value);
+
+  const angle =
+    Number(angleInput.value);
+
+
+  // ==========================================================
+  // Радиус
+  // ==========================================================
+
+  const radius =
+    diameter / 2;
+
+
+  // ==========================================================
+  // Перевод градусов в радианы
+  // ==========================================================
+
+  const angleRad =
+    angle * Math.PI / 180;
+
+
+  // ==========================================================
+  // Половина угла
+  // ==========================================================
+
+  const halfAngle =
+    angleRad / 2;
+
+
+  // ==========================================================
+  // Длина заточки
+  // ==========================================================
+
+  const pointLength =
+    radius / Math.tan(halfAngle);
+
+
+  // ==========================================================
+  // Координаты
+  // ==========================================================
+
+  const tipX = 0;
+
+  const centerY = 0;
+
+  const shoulderX =
+    pointLength;
+
+  const workingEndX =
+    shoulderX + workingLength;
+
+  const shankEndX =
+    workingEndX + shankLength;
+
+
+  // ==========================================================
+  // Размерная линия
+  // ==========================================================
+
+  const dimensionX =
+    shankEndX + Math.max(5, diameter);
+
+
+  // ==========================================================
+  // Размеры viewBox
+  // ==========================================================
+
+  const paddingX =
+    Math.max(10, shankEndX * 0.05);
+
+
+  const minX =
+    -paddingX;
+
+
+  const maxX =
+    dimensionX + paddingX;
+
+
+  const viewWidth =
+    maxX - minX;
+
+
+  // ==========================================================
+  // Высота viewBox
+  // ==========================================================
+
+  const paddingY =
+    Math.max(10, diameter);
+
+
+  const minY =
+    -radius - paddingY;
+
+
+  const maxY =
+    radius + paddingY;
+
+
+  const viewHeight =
+    maxY - minY;
+
+
+  // ==========================================================
+  // Устанавливаем viewBox
+  // ==========================================================
+
+  svg.setAttribute(
+    'viewBox',
+    `${minX} ${minY} ${viewWidth} ${viewHeight}`
+  );
+
+
+  // ==========================================================
+  // Растягиваем фон сетки
+  // ==========================================================
+
+  gridBackground.setAttribute(
+    'x',
+    minX
+  );
+
+  gridBackground.setAttribute(
+    'y',
+    minY
+  );
+
+  gridBackground.setAttribute(
+    'width',
+    viewWidth
+  );
+
+  gridBackground.setAttribute(
+    'height',
+    viewHeight
+  );
+
+
+  // ==========================================================
+  // Верхняя режущая кромка
+  // ==========================================================
+
+  edgeTop.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeTop.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeTop.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // Нижняя режущая кромка
+  // ==========================================================
+
+  edgeBottom.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeBottom.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeBottom.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // Верх рабочей части
+  // ==========================================================
+
+  bodyTop.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyTop.setAttribute(
+    'y1',
+    -radius
+  );
+
+  bodyTop.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // Низ рабочей части
+  // ==========================================================
+
+  bodyBottom.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyBottom.setAttribute(
+    'y1',
+    radius
+  );
+
+  bodyBottom.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // Верх хвостовика
+  // ==========================================================
+
+  shankTop.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankTop.setAttribute(
+    'y1',
+    -radius
+  );
+
+  shankTop.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // Низ хвостовика
+  // ==========================================================
+
+  shankBottom.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankBottom.setAttribute(
+    'y1',
+    radius
+  );
+
+  shankBottom.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // Размерная линия диаметра
+  // ==========================================================
+
+  diameterLine.setAttribute(
+    'x1',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y1',
+    -radius
+  );
+
+  diameterLine.setAttribute(
+    'x2',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // Текст диаметра
+  // ==========================================================
+
+  diameterText.setAttribute(
+    'x',
+    dimensionX + 2
+  );
+
+  diameterText.setAttribute(
+    'y',
+    1
+  );
+
+  diameterText.textContent =
+    `Ø ${diameter} мм`;
+
+}
+
+
+// ============================================================
+// События
+// ============================================================
+
+diameterInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+workingLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+shankLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+angleInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+// ============================================================
+// Первый запуск
+// ============================================================
+
+renderDrill();
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Конструктор сверла</title>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input {
+      width: 100px;
+      padding: 6px;
+    }
+
+
+    /* Контейнер */
+
+    .svg-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 400px;
+
+      border: 1px solid #ccc;
+
+      overflow: hidden;
+    }
+
+
+    /* SVG */
+
+    #drill {
+      width: 100%;
+      height: 100%;
+
+      display: block;
+    }
+
+
+    /* =====================================================
+       СЕТКА
+       ===================================================== */
+
+    .grid-line {
+      stroke: #ddd;
+      stroke-width: 0.2;
+    }
+
+
+    /* =====================================================
+       ЗАЛИВКИ
+       ===================================================== */
+
+    /*
+       Режущая часть
+    */
+
+    .cutting-area {
+      fill: rgba(255, 0, 0, 0.18);
+    }
+
+
+    /*
+       Хвостовик
+    */
+
+    .shank-area {
+      fill: rgba(0, 180, 0, 0.18);
+    }
+
+
+    /* =====================================================
+       ЛИНИИ СВЕРЛА
+       ===================================================== */
+
+    .drill {
+      stroke: black;
+      stroke-width: 0.5;
+      fill: none;
+    }
+
+
+    /* =====================================================
+       РАЗМЕРЫ
+       ===================================================== */
+
+    .dimension {
+      stroke: #555;
+      stroke-width: 0.25;
+    }
+
+
+    text {
+      font-size: 3px;
+      fill: #333;
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+<h2>Конструктор сверла</h2>
+
+
+<div class="controls">
+
+
+  <label>
+    Диаметр, мм
+
+    <input
+      id="diameter"
+      type="number"
+      value="10"
+      min="1"
+      step="0.1"
+    >
+  </label>
+
+
+  <label>
+    Длина рабочей части, мм
+
+    <input
+      id="workingLength"
+      type="number"
+      value="100"
+      min="1"
+      step="1"
+    >
+  </label>
+
+
+  <label>
+    Длина хвостовика, мм
+
+    <input
+      id="shankLength"
+      type="number"
+      value="50"
+      min="1"
+      step="1"
+    >
+  </label>
+
+
+  <label>
+    Угол заточки, °
+
+    <input
+      id="angle"
+      type="number"
+      value="118"
+      min="1"
+      max="179"
+      step="1"
+    >
+  </label>
+
+
+</div>
+
+
+<div class="svg-container">
+
+
+  <svg
+    id="drill"
+    preserveAspectRatio="xMidYMid meet"
+  >
+
+
+    <!-- =================================================
+         DEFINITIONS
+         ================================================= -->
+
+    <defs>
+
+
+      <!-- Сетка 5 × 5 мм -->
+
+      <pattern
+        id="grid"
+        width="5"
+        height="5"
+        patternUnits="userSpaceOnUse"
+      >
+
+        <path
+          d="M 5 0 L 0 0 L 0 5"
+          fill="none"
+          class="grid-line"
+        />
+
+      </pattern>
+
+
+    </defs>
+
+
+    <!-- =================================================
+         ФОН
+         ================================================= -->
+
+    <rect
+      id="gridBackground"
+      fill="url(#grid)"
+    />
+
+
+    <!-- =================================================
+         КРАСНАЯ ОБЛАСТЬ
+         РЕЖУЩАЯ ЧАСТЬ
+         ================================================= -->
+
+    <path
+      id="cuttingArea"
+      class="cutting-area"
+    />
+
+
+    <!-- =================================================
+         ЗЕЛЁНАЯ ОБЛАСТЬ
+         ХВОСТОВИК
+         ================================================= -->
+
+    <rect
+      id="shankArea"
+      class="shank-area"
+    />
+
+
+    <!-- =================================================
+         ЛИНИИ СВЕРЛА
+         ================================================= -->
+
+
+    <!-- Верхняя режущая кромка -->
+
+    <line
+      id="edgeTop"
+      class="drill"
+    />
+
+
+    <!-- Нижняя режущая кромка -->
+
+    <line
+      id="edgeBottom"
+      class="drill"
+    />
+
+
+    <!-- Верхняя сторона рабочей части -->
+
+    <line
+      id="bodyTop"
+      class="drill"
+    />
+
+
+    <!-- Нижняя сторона рабочей части -->
+
+    <line
+      id="bodyBottom"
+      class="drill"
+    />
+
+
+    <!-- Верх хвостовика -->
+
+    <line
+      id="shankTop"
+      class="drill"
+    />
+
+
+    <!-- Низ хвостовика -->
+
+    <line
+      id="shankBottom"
+      class="drill"
+    />
+
+
+    <!-- =================================================
+         РАЗМЕР ДИАМЕТРА
+         ================================================= -->
+
+    <line
+      id="diameterLine"
+      class="dimension"
+    />
+
+
+    <text
+      id="diameterText"
+    ></text>
+
+
+  </svg>
+
+</div>
+
+
+<script>
+
+
+// ============================================================
+// INPUT
+// ============================================================
+
+const diameterInput =
+  document.querySelector('#diameter');
+
+const workingLengthInput =
+  document.querySelector('#workingLength');
+
+const shankLengthInput =
+  document.querySelector('#shankLength');
+
+const angleInput =
+  document.querySelector('#angle');
+
+
+// ============================================================
+// SVG
+// ============================================================
+
+const svg =
+  document.querySelector('#drill');
+
+
+// ============================================================
+// GRID
+// ============================================================
+
+const gridBackground =
+  document.querySelector('#gridBackground');
+
+
+// ============================================================
+// ОБЛАСТИ
+// ============================================================
+
+const cuttingArea =
+  document.querySelector('#cuttingArea');
+
+const shankArea =
+  document.querySelector('#shankArea');
+
+
+// ============================================================
+// ЛИНИИ
+// ============================================================
+
+const edgeTop =
+  document.querySelector('#edgeTop');
+
+const edgeBottom =
+  document.querySelector('#edgeBottom');
+
+const bodyTop =
+  document.querySelector('#bodyTop');
+
+const bodyBottom =
+  document.querySelector('#bodyBottom');
+
+const shankTop =
+  document.querySelector('#shankTop');
+
+const shankBottom =
+  document.querySelector('#shankBottom');
+
+
+// ============================================================
+// РАЗМЕР
+// ============================================================
+
+const diameterLine =
+  document.querySelector('#diameterLine');
+
+const diameterText =
+  document.querySelector('#diameterText');
+
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function renderDrill() {
+
+
+  // ==========================================================
+  // ПАРАМЕТРЫ
+  // ==========================================================
+
+  const diameter =
+    Number(diameterInput.value);
+
+  const workingLength =
+    Number(workingLengthInput.value);
+
+  const shankLength =
+    Number(shankLengthInput.value);
+
+  const angle =
+    Number(angleInput.value);
+
+
+  // ==========================================================
+  // РАДИУС
+  // ==========================================================
+
+  const radius =
+    diameter / 2;
+
+
+  // ==========================================================
+  // УГОЛ
+  // ==========================================================
+
+  const angleRad =
+    angle * Math.PI / 180;
+
+
+  const halfAngle =
+    angleRad / 2;
+
+
+  // ==========================================================
+  // ДЛИНА ВЕРШИНЫ
+  // ==========================================================
+
+  const pointLength =
+    radius / Math.tan(halfAngle);
+
+
+  // ==========================================================
+  // КООРДИНАТЫ
+  // ==========================================================
+
+  const tipX = 0;
+
+  const centerY = 0;
+
+
+  const shoulderX =
+    pointLength;
+
+
+  const workingEndX =
+    shoulderX + workingLength;
+
+
+  const shankEndX =
+    workingEndX + shankLength;
+
+
+  // ==========================================================
+  // РАЗМЕРНАЯ ЛИНИЯ
+  // ==========================================================
+
+  const dimensionX =
+    shankEndX + Math.max(5, diameter);
+
+
+  // ==========================================================
+  // VIEWBOX
+  // ==========================================================
+
+  const paddingX =
+    Math.max(10, shankEndX * 0.05);
+
+
+  const minX =
+    -paddingX;
+
+
+  const maxX =
+    dimensionX + paddingX;
+
+
+  const viewWidth =
+    maxX - minX;
+
+
+  const paddingY =
+    Math.max(10, diameter);
+
+
+  const minY =
+    -radius - paddingY;
+
+
+  const maxY =
+    radius + paddingY;
+
+
+  const viewHeight =
+    maxY - minY;
+
+
+  svg.setAttribute(
+    'viewBox',
+    `${minX} ${minY} ${viewWidth} ${viewHeight}`
+  );
+
+
+  // ==========================================================
+  // СЕТКА
+  // ==========================================================
+
+  gridBackground.setAttribute(
+    'x',
+    minX
+  );
+
+  gridBackground.setAttribute(
+    'y',
+    minY
+  );
+
+  gridBackground.setAttribute(
+    'width',
+    viewWidth
+  );
+
+  gridBackground.setAttribute(
+    'height',
+    viewHeight
+  );
+
+
+  // ==========================================================
+  // КРАСНАЯ ОБЛАСТЬ
+  // РЕЖУЩАЯ ЧАСТЬ
+  // ==========================================================
+
+  /*
+  
+      tip
+       \
+        \
+         ┌──────────────
+         │
+         │
+         └──────────────
+
+  */
+
+  cuttingArea.setAttribute(
+    'd',
+
+    `
+      M ${tipX} ${centerY}
+
+      L ${shoulderX} ${-radius}
+
+      L ${workingEndX} ${-radius}
+
+      L ${workingEndX} ${radius}
+
+      L ${shoulderX} ${radius}
+
+      Z
+    `
+  );
+
+
+  // ==========================================================
+  // ЗЕЛЁНАЯ ОБЛАСТЬ
+  // ХВОСТОВИК
+  // ==========================================================
+
+  shankArea.setAttribute(
+    'x',
+    workingEndX
+  );
+
+  shankArea.setAttribute(
+    'y',
+    -radius
+  );
+
+  shankArea.setAttribute(
+    'width',
+    shankLength
+  );
+
+  shankArea.setAttribute(
+    'height',
+    diameter
+  );
+
+
+  // ==========================================================
+  // ВЕРХНЯЯ РЕЖУЩАЯ КРОМКА
+  // ==========================================================
+
+  edgeTop.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeTop.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeTop.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // НИЖНЯЯ РЕЖУЩАЯ КРОМКА
+  // ==========================================================
+
+  edgeBottom.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeBottom.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeBottom.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // ВЕРХ РАБОЧЕЙ ЧАСТИ
+  // ==========================================================
+
+  bodyTop.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyTop.setAttribute(
+    'y1',
+    -radius
+  );
+
+  bodyTop.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // НИЗ РАБОЧЕЙ ЧАСТИ
+  // ==========================================================
+
+  bodyBottom.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyBottom.setAttribute(
+    'y1',
+    radius
+  );
+
+  bodyBottom.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // ВЕРХ ХВОСТОВИКА
+  // ==========================================================
+
+  shankTop.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankTop.setAttribute(
+    'y1',
+    -radius
+  );
+
+  shankTop.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankTop.setAttribute(
+    'y2',
+    -radius
+  );
+
+
+  // ==========================================================
+  // НИЗ ХВОСТОВИКА
+  // ==========================================================
+
+  shankBottom.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankBottom.setAttribute(
+    'y1',
+    radius
+  );
+
+  shankBottom.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankBottom.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // РАЗМЕРНАЯ ЛИНИЯ
+  // ==========================================================
+
+  diameterLine.setAttribute(
+    'x1',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y1',
+    -radius
+  );
+
+  diameterLine.setAttribute(
+    'x2',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y2',
+    radius
+  );
+
+
+  // ==========================================================
+  // ТЕКСТ
+  // ==========================================================
+
+  diameterText.setAttribute(
+    'x',
+    dimensionX + 2
+  );
+
+  diameterText.setAttribute(
+    'y',
+    1
+  );
+
+  diameterText.textContent =
+    `Ø ${diameter} мм`;
+
+}
+
+
+// ============================================================
+// СОБЫТИЯ
+// ============================================================
+
+diameterInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+workingLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+shankLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+angleInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+// ============================================================
+// ЗАПУСК
+// ============================================================
+
+renderDrill();
+
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Конструктор сверла</title>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    input {
+      width: 100px;
+      padding: 6px;
+    }
+
+    /* Контейнер SVG */
+
+    .svg-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 400px;
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+
+    /* SVG */
+
+    #drill {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* =====================================================
+       СЕТКА
+       ===================================================== */
+
+    .grid-line {
+      stroke: #ddd;
+      stroke-width: 0.2;
+    }
+
+    /* =====================================================
+       ЗАЛИВКИ
+       ===================================================== */
+
+    .cutting-area {
+      fill: rgba(255, 0, 0, 0.18);
+    }
+
+    .shank-area {
+      fill: rgba(0, 180, 0, 0.18);
+    }
+
+    /* =====================================================
+       ЛИНИИ СВЕРЛА
+       ===================================================== */
+
+    .drill {
+      stroke: black;
+      stroke-width: 0.5;
+      fill: none;
+    }
+
+    /* =====================================================
+       РАЗМЕРЫ
+       ===================================================== */
+
+    .dimension {
+      stroke: #555;
+      stroke-width: 0.25;
+    }
+
+    text {
+      font-size: 3px;
+      fill: #333;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<h2>Конструктор сверла</h2>
+
+<div class="controls">
+
+  <!-- Диаметр режущей части -->
+
+  <label>
+    Диаметр режущей части, мм
+
+```
+<input
+  id="cuttingDiameter"
+  type="number"
+  value="10"
+  min="1"
+  step="0.1"
+>
+```
+
+  </label>
+
+  <!-- Диаметр хвостовика -->
+
+  <label>
+    Диаметр хвостовика, мм
+
+```
+<input
+  id="shankDiameter"
+  type="number"
+  value="8"
+  min="1"
+  step="0.1"
+>
+```
+
+  </label>
+
+  <!-- Длина рабочей части -->
+
+  <label>
+    Длина рабочей части, мм
+
+```
+<input
+  id="workingLength"
+  type="number"
+  value="100"
+  min="1"
+  step="1"
+>
+```
+
+  </label>
+
+  <!-- Длина хвостовика -->
+
+  <label>
+    Длина хвостовика, мм
+
+```
+<input
+  id="shankLength"
+  type="number"
+  value="50"
+  min="1"
+  step="1"
+>
+```
+
+  </label>
+
+  <!-- Угол заточки -->
+
+  <label>
+    Угол заточки, °
+
+```
+<input
+  id="angle"
+  type="number"
+  value="118"
+  min="1"
+  max="179"
+  step="1"
+>
+```
+
+  </label>
+
+</div>
+
+<div class="svg-container">
+
+<svg
+id="drill"
+preserveAspectRatio="xMidYMid meet"
+
+>
+
+```
+<!-- =================================================
+     DEFINITIONS
+     ================================================= -->
+
+<defs>
+
+  <!-- Сетка 5 × 5 мм -->
+
+  <pattern
+    id="grid"
+    width="5"
+    height="5"
+    patternUnits="userSpaceOnUse"
+  >
+
+    <path
+      d="M 5 0 L 0 0 L 0 5"
+      fill="none"
+      class="grid-line"
+    />
+
+  </pattern>
+
+</defs>
+
+
+<!-- =================================================
+     ФОН С СЕТКОЙ
+     ================================================= -->
+
+<rect
+  id="gridBackground"
+  fill="url(#grid)"
+/>
+
+
+<!-- =================================================
+     КРАСНАЯ ОБЛАСТЬ
+     РЕЖУЩАЯ ЧАСТЬ
+     ================================================= -->
+
+<path
+  id="cuttingArea"
+  class="cutting-area"
+/>
+
+
+<!-- =================================================
+     ЗЕЛЁНАЯ ОБЛАСТЬ
+     ХВОСТОВИК
+     ================================================= -->
+
+<path
+  id="shankArea"
+  class="shank-area"
+/>
+
+
+<!-- =================================================
+     ЛИНИИ СВЕРЛА
+     ================================================= -->
+
+<!-- Верхняя режущая кромка -->
+
+<line
+  id="edgeTop"
+  class="drill"
+/>
+
+
+<!-- Нижняя режущая кромка -->
+
+<line
+  id="edgeBottom"
+  class="drill"
+/>
+
+
+<!-- Верхняя сторона рабочей части -->
+
+<line
+  id="bodyTop"
+  class="drill"
+/>
+
+
+<!-- Нижняя сторона рабочей части -->
+
+<line
+  id="bodyBottom"
+  class="drill"
+/>
+
+
+<!-- Верх хвостовика -->
+
+<line
+  id="shankTop"
+  class="drill"
+/>
+
+
+<!-- Низ хвостовика -->
+
+<line
+  id="shankBottom"
+  class="drill"
+/>
+
+
+<!-- =================================================
+     РАЗМЕР ДИАМЕТРА РЕЖУЩЕЙ ЧАСТИ
+     ================================================= -->
+
+<line
+  id="diameterLine"
+  class="dimension"
+/>
+
+<text
+  id="diameterText"
+></text>
+```
+
+  </svg>
+
+</div>
+
+<script>
+
+
+// ============================================================
+// INPUT
+// ============================================================
+
+const cuttingDiameterInput =
+  document.querySelector('#cuttingDiameter');
+
+const shankDiameterInput =
+  document.querySelector('#shankDiameter');
+
+const workingLengthInput =
+  document.querySelector('#workingLength');
+
+const shankLengthInput =
+  document.querySelector('#shankLength');
+
+const angleInput =
+  document.querySelector('#angle');
+
+
+// ============================================================
+// SVG
+// ============================================================
+
+const svg =
+  document.querySelector('#drill');
+
+
+// ============================================================
+// GRID
+// ============================================================
+
+const gridBackground =
+  document.querySelector('#gridBackground');
+
+
+// ============================================================
+// ОБЛАСТИ
+// ============================================================
+
+const cuttingArea =
+  document.querySelector('#cuttingArea');
+
+const shankArea =
+  document.querySelector('#shankArea');
+
+
+// ============================================================
+// ЛИНИИ
+// ============================================================
+
+const edgeTop =
+  document.querySelector('#edgeTop');
+
+const edgeBottom =
+  document.querySelector('#edgeBottom');
+
+const bodyTop =
+  document.querySelector('#bodyTop');
+
+const bodyBottom =
+  document.querySelector('#bodyBottom');
+
+const shankTop =
+  document.querySelector('#shankTop');
+
+const shankBottom =
+  document.querySelector('#shankBottom');
+
+
+// ============================================================
+// РАЗМЕР
+// ============================================================
+
+const diameterLine =
+  document.querySelector('#diameterLine');
+
+const diameterText =
+  document.querySelector('#diameterText');
+
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function renderDrill() {
+
+
+  // ==========================================================
+  // ПАРАМЕТРЫ
+  // ==========================================================
+
+  const cuttingDiameter =
+    Number(cuttingDiameterInput.value);
+
+  const shankDiameter =
+    Number(shankDiameterInput.value);
+
+  const workingLength =
+    Number(workingLengthInput.value);
+
+  const shankLength =
+    Number(shankLengthInput.value);
+
+  const angle =
+    Number(angleInput.value);
+
+
+  // ==========================================================
+  // РАДИУСЫ
+  // ==========================================================
+
+  const cuttingRadius =
+    cuttingDiameter / 2;
+
+  const shankRadius =
+    shankDiameter / 2;
+
+
+  // ==========================================================
+  // УГОЛ
+  //
+  // Угол рассчитывается ТОЛЬКО
+  // от диаметра режущей части.
+  // ==========================================================
+
+  const angleRad =
+    angle * Math.PI / 180;
+
+  const halfAngle =
+    angleRad / 2;
+
+
+  // ==========================================================
+  // ДЛИНА ВЕРШИНЫ
+  // ==========================================================
+
+  const pointLength =
+    cuttingRadius /
+    Math.tan(halfAngle);
+
+
+  // ==========================================================
+  // КООРДИНАТЫ
+  // ==========================================================
+
+  const tipX = 0;
+
+  const centerY = 0;
+
+
+  // Конец заточки
+
+  const shoulderX =
+    pointLength;
+
+
+  // Конец рабочей части
+
+  const workingEndX =
+    shoulderX + workingLength;
+
+
+  // Конец хвостовика
+
+  const shankEndX =
+    workingEndX + shankLength;
+
+
+  // ==========================================================
+  // РАЗМЕРНАЯ ЛИНИЯ
+  // ==========================================================
+
+  const dimensionX =
+    shankEndX +
+    Math.max(5, cuttingDiameter);
+
+
+  // ==========================================================
+  // VIEWBOX
+  // ==========================================================
+
+  const paddingX =
+    Math.max(10, shankEndX * 0.05);
+
+
+  const minX =
+    -paddingX;
+
+
+  const maxX =
+    dimensionX + paddingX;
+
+
+  const viewWidth =
+    maxX - minX;
+
+
+  // Берём максимальный диаметр,
+  // чтобы и рабочая часть и хвостовик
+  // полностью попадали в область.
+
+  const maxRadius =
+    Math.max(
+      cuttingRadius,
+      shankRadius
+    );
+
+
+  const paddingY =
+    Math.max(10, maxRadius);
+
+
+  const minY =
+    -maxRadius - paddingY;
+
+
+  const maxY =
+    maxRadius + paddingY;
+
+
+  const viewHeight =
+    maxY - minY;
+
+
+  // ==========================================================
+  // VIEWBOX
+  // ==========================================================
+
+  svg.setAttribute(
+    'viewBox',
+    `${minX} ${minY} ${viewWidth} ${viewHeight}`
+  );
+
+
+  // ==========================================================
+  // СЕТКА
+  // ==========================================================
+
+  gridBackground.setAttribute(
+    'x',
+    minX
+  );
+
+  gridBackground.setAttribute(
+    'y',
+    minY
+  );
+
+  gridBackground.setAttribute(
+    'width',
+    viewWidth
+  );
+
+  gridBackground.setAttribute(
+    'height',
+    viewHeight
+  );
+
+
+  // ==========================================================
+  // КРАСНАЯ ОБЛАСТЬ
+  //
+  // Включает:
+  // 1. вершину
+  // 2. рабочую часть
+  //
+  // Высота = диаметр режущей части.
+  // ==========================================================
+
+  cuttingArea.setAttribute(
+    'd',
+
+    `
+      M ${tipX} ${centerY}
+
+      L ${shoulderX} ${-cuttingRadius}
+
+      L ${workingEndX} ${-cuttingRadius}
+
+      L ${workingEndX} ${cuttingRadius}
+
+      L ${shoulderX} ${cuttingRadius}
+
+      Z
+    `
+  );
+
+
+  // ==========================================================
+  // ЗЕЛЁНАЯ ОБЛАСТЬ
+  //
+  // Хвостовик имеет собственный диаметр.
+  // ==========================================================
+
+  shankArea.setAttribute(
+    'd',
+
+    `
+      M ${workingEndX} ${-shankRadius}
+
+      L ${shankEndX} ${-shankRadius}
+
+      L ${shankEndX} ${shankRadius}
+
+      L ${workingEndX} ${shankRadius}
+
+      Z
+    `
+  );
+
+
+  // ==========================================================
+  // ВЕРХНЯЯ РЕЖУЩАЯ КРОМКА
+  // ==========================================================
+
+  edgeTop.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeTop.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeTop.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeTop.setAttribute(
+    'y2',
+    -cuttingRadius
+  );
+
+
+  // ==========================================================
+  // НИЖНЯЯ РЕЖУЩАЯ КРОМКА
+  // ==========================================================
+
+  edgeBottom.setAttribute(
+    'x1',
+    tipX
+  );
+
+  edgeBottom.setAttribute(
+    'y1',
+    centerY
+  );
+
+  edgeBottom.setAttribute(
+    'x2',
+    shoulderX
+  );
+
+  edgeBottom.setAttribute(
+    'y2',
+    cuttingRadius
+  );
+
+
+  // ==========================================================
+  // ВЕРХ РАБОЧЕЙ ЧАСТИ
+  // ==========================================================
+
+  bodyTop.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyTop.setAttribute(
+    'y1',
+    -cuttingRadius
+  );
+
+  bodyTop.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyTop.setAttribute(
+    'y2',
+    -cuttingRadius
+  );
+
+
+  // ==========================================================
+  // НИЗ РАБОЧЕЙ ЧАСТИ
+  // ==========================================================
+
+  bodyBottom.setAttribute(
+    'x1',
+    shoulderX
+  );
+
+  bodyBottom.setAttribute(
+    'y1',
+    cuttingRadius
+  );
+
+  bodyBottom.setAttribute(
+    'x2',
+    workingEndX
+  );
+
+  bodyBottom.setAttribute(
+    'y2',
+    cuttingRadius
+  );
+
+
+  // ==========================================================
+  // ВЕРХ ХВОСТОВИКА
+  // ==========================================================
+
+  shankTop.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankTop.setAttribute(
+    'y1',
+    -shankRadius
+  );
+
+  shankTop.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankTop.setAttribute(
+    'y2',
+    -shankRadius
+  );
+
+
+  // ==========================================================
+  // НИЗ ХВОСТОВИКА
+  // ==========================================================
+
+  shankBottom.setAttribute(
+    'x1',
+    workingEndX
+  );
+
+  shankBottom.setAttribute(
+    'y1',
+    shankRadius
+  );
+
+  shankBottom.setAttribute(
+    'x2',
+    shankEndX
+  );
+
+  shankBottom.setAttribute(
+    'y2',
+    shankRadius
+  );
+
+
+  // ==========================================================
+  // РАЗМЕРНАЯ ЛИНИЯ
+  // ==========================================================
+
+  diameterLine.setAttribute(
+    'x1',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y1',
+    -cuttingRadius
+  );
+
+  diameterLine.setAttribute(
+    'x2',
+    dimensionX
+  );
+
+  diameterLine.setAttribute(
+    'y2',
+    cuttingRadius
+  );
+
+
+  // ==========================================================
+  // ТЕКСТ ДИАМЕТРА
+  // ==========================================================
+
+  diameterText.setAttribute(
+    'x',
+    dimensionX + 2
+  );
+
+  diameterText.setAttribute(
+    'y',
+    1
+  );
+
+  diameterText.textContent =
+    `Ø ${cuttingDiameter} мм`;
+
+}
+
+
+// ============================================================
+// СОБЫТИЯ
+// ============================================================
+
+cuttingDiameterInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+shankDiameterInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+workingLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+shankLengthInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+angleInput.addEventListener(
+  'input',
+  renderDrill
+);
+
+
+// ============================================================
+// ЗАПУСК
+// ============================================================
 
 renderDrill();
 
