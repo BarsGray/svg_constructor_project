@@ -66,6 +66,7 @@ function renderDrill() {
     diameterLine.setAttribute('y2', radius);
     
     diameterText.setAttribute('x', shankLength + workingLength + 8);
+    diameterText.textContent = `Ø ${diameter} мм`;
 }
 
 
