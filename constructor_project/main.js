@@ -8,7 +8,17 @@ const workingLengthInput = document.querySelector('#workingLength');
 const shankLengthInput = document.querySelector('#shankLength');
 const angleInput = document.querySelector('#angle');
 
+const edgeTop = document.querySelector('#edgeTop');
+const edgeBottom = document.querySelector('#edgeBottom');
 
+const bodyTop = document.querySelector('#bodyTop');
+const bodyBottom = document.querySelector('#bodyBottom');
+
+const shankTop = document.querySelector('#shankTop');
+const shankBottom = document.querySelector('#shankBottom');
+
+const diameterLine = document.querySelector('#diameterLine');
+const diameterText = document.querySelector('#diameterText');
 
 function renderDrill() {
     
@@ -16,7 +26,46 @@ function renderDrill() {
     const workingLength = Number(workingLengthInput.value);
     const shankLength = Number(shankLengthInput.value);
     const angle = Number(angleInput.value);
+
+    const radius = diameter / 2;
     
+
+    bodyTop.setAttribute('x1', 0);
+    bodyTop.setAttribute('y1', -radius);
+
+    bodyTop.setAttribute('x2', workingLength);
+    bodyTop.setAttribute('y2', -radius);
+
+    bodyBottom.setAttribute('x1', 0);
+    bodyBottom.setAttribute('y1', radius);
+
+    bodyBottom.setAttribute('x2', workingLength);
+    bodyBottom.setAttribute('y2', radius);
+
+
+
+    shankTop.setAttribute('x1', workingLength);
+    shankTop.setAttribute('y1', -radius);
+
+    shankTop.setAttribute('x2', shankLength + workingLength);
+    shankTop.setAttribute('y2', -radius);
+
+    shankBottom.setAttribute('x1', workingLength);
+    shankBottom.setAttribute('y1', radius);
+
+    shankBottom.setAttribute('x2', shankLength + workingLength);
+    shankBottom.setAttribute('y2', radius);
+
+
+
+
+    diameterLine.setAttribute('x1', shankLength + workingLength + 5);
+    diameterLine.setAttribute('y1', -radius);
+
+    diameterLine.setAttribute('x2', shankLength + workingLength + 5);
+    diameterLine.setAttribute('y2', radius);
+    
+    diameterText.setAttribute('x', shankLength + workingLength + 8);
 }
 
 
