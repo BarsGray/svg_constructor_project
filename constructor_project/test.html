@@ -55,12 +55,10 @@
             flex-direction: column;
             gap: 5px;
         }
-
         input {
             width: 100px;
             padding: 6px;
         }
-
         svg {
             width: 100%;
             max-width: 900px;
@@ -68,24 +66,20 @@
             border: 1px solid #ccc;
             display: block;
         }
-
         .axis {
             stroke: #999;
             stroke-width: 0.3;
             stroke-dasharray: 2 2;
         }
-
         .drill {
             stroke: black;
             stroke-width: 0.5;
             fill: none;
         }
-
         .dimension {
             stroke: #555;
             stroke-width: 0.25;
         }
-
         text {
             font-size: 3px;
             fill: #333;
@@ -98,94 +92,30 @@
 <h2>Конструктор сверла</h2>
 
 <div class="controls">
-
-    <label>
-        Диаметр, мм
-        <input id="diameter" type="number" value="10" min="1" step="0.1">
-    </label>
-
-    <label>
-        Длина рабочей части, мм
-        <input id="workingLength" type="number" value="100" min="1" step="1">
-    </label>
-
-    <label>
-        Длина хвостовика, мм
-        <input id="shankLength" type="number" value="50" min="1" step="1">
-    </label>
-
-    <label>
-        Угол заточки, °
-        <input id="angle" type="number" value="118" min="1" max="179" step="1">
-    </label>
-
+    <label>Диаметр, мм<input id="diameter" type="number" value="10" min="1" step="0.1"></label>
+    <label>Длина рабочей части, мм<input id="workingLength" type="number" value="100" min="1" step="1"></label>
+    <label>Длина хвостовика, мм<input id="shankLength" type="number" value="50" min="1" step="1"></label>
+    <label>Угол заточки, °<input id="angle" type="number" value="118" min="1" max="179" step="1"></label>
 </div>
-
-
-<svg
-    id="drill"
-    viewBox="-10 -20 170 40"
-    preserveAspectRatio="xMidYMid meet"
->
-
+<svg id="drill" viewBox="-10 -20 170 40" preserveAspectRatio="xMidYMid meet" >
     <!-- Центральная ось -->
-    <line
-        id="axis"
-        class="axis"
-        x1="-10"
-        y1="0"
-        x2="170"
-        y2="0"
-    />
-
+    <line id="axis" class="axis" x1="-10" y1="0" x2="170" y2="0" />
     <!-- Верхняя режущая кромка -->
-    <line
-        id="edgeTop"
-        class="drill"
-    />
-
+    <line id="edgeTop" class="drill" />
     <!-- Нижняя режущая кромка -->
-    <line
-        id="edgeBottom"
-        class="drill"
-    />
-
+    <line id="edgeBottom" class="drill" />
     <!-- Верхняя сторона рабочей части -->
-    <line
-        id="bodyTop"
-        class="drill"
-    />
-
+    <line id="bodyTop" class="drill" />
     <!-- Нижняя сторона рабочей части -->
-    <line
-        id="bodyBottom"
-        class="drill"
-    />
-
+    <line id="bodyBottom" class="drill" />
     <!-- Верх хвостовика -->
-    <line
-        id="shankTop"
-        class="drill"
-    />
-
+    <line id="shankTop" class="drill" />
     <!-- Низ хвостовика -->
-    <line
-        id="shankBottom"
-        class="drill"
-    />
-
+    <line id="shankBottom" class="drill" />
     <!-- Размер диаметра -->
-    <line
-        id="diameterLine"
-        class="dimension"
-    />
-
-    <text
-        id="diameterText"
-    />
-
+    <line id="diameterLine" class="dimension" />
+    <text id="diameterText" />
 </svg>
-
 
 <script>
 
@@ -238,7 +168,6 @@ function renderDrill() {
 
     const halfAngle = angleRad / 2;
 
-
     /*
         Расстояние от вершины
         до полной ширины диаметра.
@@ -251,13 +180,10 @@ function renderDrill() {
         └──────────┘
            radius
 
-        pointLength =
-            radius / tan(angle / 2)
+        pointLength = radius / tan(angle / 2)
     */
 
-    const pointLength =
-        radius / Math.tan(halfAngle);
-
+    const pointLength = radius / Math.tan(halfAngle);
 
     // -------------------------
     // Координаты
@@ -268,12 +194,9 @@ function renderDrill() {
 
     const shoulderX = pointLength;
 
-    const workingEndX =
-        pointLength + workingLength;
+    const workingEndX = pointLength + workingLength;
 
-    const shankEndX =
-        workingEndX + shankLength;
-
+    const shankEndX = workingEndX + shankLength;
 
     // -------------------------
     // Режущие кромки
@@ -292,7 +215,6 @@ function renderDrill() {
     edgeBottom.setAttribute('x2', shoulderX);
     edgeBottom.setAttribute('y2', radius);
 
-
     // -------------------------
     // Рабочая часть
     // -------------------------
@@ -309,7 +231,6 @@ function renderDrill() {
 
     bodyBottom.setAttribute('x2', workingEndX);
     bodyBottom.setAttribute('y2', radius);
-
 
     // -------------------------
     // Хвостовик
@@ -328,72 +249,28 @@ function renderDrill() {
     shankBottom.setAttribute('x2', shankEndX);
     shankBottom.setAttribute('y2', radius);
 
-
     // -------------------------
     // Размер диаметра
     // -------------------------
 
     const dimensionX = shankEndX + 5;
 
-    diameterLine.setAttribute(
-        'x1',
-        dimensionX
-    );
+    diameterLine.setAttribute( 'x1', dimensionX );
+    diameterLine.setAttribute( 'y1', -radius );
+    diameterLine.setAttribute( 'x2', dimensionX );
+    diameterLine.setAttribute( 'y2', radius );
 
-    diameterLine.setAttribute(
-        'y1',
-        -radius
-    );
-
-    diameterLine.setAttribute(
-        'x2',
-        dimensionX
-    );
-
-    diameterLine.setAttribute(
-        'y2',
-        radius
-    );
-
-
-    diameterText.setAttribute(
-        'x',
-        dimensionX + 2
-    );
-
-    diameterText.setAttribute(
-        'y',
-        1
-    );
-
-    diameterText.textContent =
-        `Ø ${diameter} мм`;
-
+    diameterText.setAttribute( 'x', dimensionX + 2 );
+    diameterText.setAttribute( 'y', 1 );
+    diameterText.textContent = `Ø ${diameter} мм`;
 }
-
 
 // Обновляем при изменении параметров
 
-diameterInput.addEventListener(
-    'input',
-    renderDrill
-);
-
-workingLengthInput.addEventListener(
-    'input',
-    renderDrill
-);
-
-shankLengthInput.addEventListener(
-    'input',
-    renderDrill
-);
-
-angleInput.addEventListener(
-    'input',
-    renderDrill
-);
-
+diameterInput.addEventListener( 'input', renderDrill );
+workingLengthInput.addEventListener( 'input', renderDrill );
+shankLengthInput.addEventListener( 'input', renderDrill );
+angleInput.addEventListener( 'input', renderDrill );
 
 // Первоначальная отрисовка
 
