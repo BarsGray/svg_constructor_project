@@ -20,6 +20,9 @@ const shankBottom = document.querySelector('#shankBottom');
 const diameterLine = document.querySelector('#diameterLine');
 const diameterText = document.querySelector('#diameterText');
 
+
+const axis = document.querySelector('#axis');
+
 function renderDrill() {
     
     const diameter = Number(diameterInput.value);
@@ -28,15 +31,34 @@ function renderDrill() {
     const angle = Number(angleInput.value);
 
     const radius = diameter / 2;
+
+    
+    
+    // Пользователь дал угол заточки в градусах певодим в радианы
+    const angleRad = angle * Math.PI / 180;
+    // Половина полного угла
+    const halfAngle = angleRad / 2;
+    const pointLength = radius / Math.tan(halfAngle);
+
+    edgeTop.setAttribute('x1', 0);
+    edgeTop.setAttribute('x2', pointLength);
+    // edgeTop.setAttribute('y1', 0);
+    edgeTop.setAttribute('y2', -radius);
+    edgeBottom.setAttribute('x1', 0);
+    edgeBottom.setAttribute('x2', pointLength);
+    // edgeBottom.setAttribute('y2', 0);
+    edgeBottom.setAttribute('y2', radius);
+
+
     
 
-    bodyTop.setAttribute('x1', 0);
+    bodyTop.setAttribute('x1', pointLength);
     bodyTop.setAttribute('y1', -radius);
 
     bodyTop.setAttribute('x2', workingLength);
     bodyTop.setAttribute('y2', -radius);
 
-    bodyBottom.setAttribute('x1', 0);
+    bodyBottom.setAttribute('x1', pointLength);
     bodyBottom.setAttribute('y1', radius);
 
     bodyBottom.setAttribute('x2', workingLength);
@@ -67,6 +89,12 @@ function renderDrill() {
     
     diameterText.setAttribute('x', shankLength + workingLength + 8);
     diameterText.textContent = `Ø ${diameter} мм`;
+
+
+
+    let langhtDrill = workingLength + shankLength
+    svg.setAttribute('viewBox', `-6 ${-(diameter / 2) - 5} ${langhtDrill + 30} ${diameter + 10}`);
+    axis.setAttribute('x2', `${langhtDrill + 30}`);
 }
 
 

@@ -43,6 +43,12 @@ label {
   stroke-width: 0.5;
   fill: none;
 }
+#bodyTop {
+  stroke: red;
+}
+#bodyBottom {
+  stroke: red;
+}
 .dimension {
   stroke: #555;
   stroke-width: 0.25;
